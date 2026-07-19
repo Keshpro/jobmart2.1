@@ -106,7 +106,7 @@ const Dashboard = () => {
                             <h2 className="text-xl font-bold text-white mb-2">Resume / CV</h2>
                             <p className="text-sm text-neutral-400 mb-6">Upload your most recent resume to stand out to employers.</p>
                             
-                            <UploadResume />
+                            <UploadResume existingResume={candidate?.resume} />
                         </div>
 
                         {/* Dummy Status Section (UI Enhancement) */}

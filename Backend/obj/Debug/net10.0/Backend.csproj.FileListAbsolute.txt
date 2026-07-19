@@ -141,3 +141,16 @@ D:\KreativeLabs\jobmart2\Backend\obj\Debug\net10.0\refint\Backend.dll
 D:\KreativeLabs\jobmart2\Backend\obj\Debug\net10.0\Backend.pdb
 D:\KreativeLabs\jobmart2\Backend\obj\Debug\net10.0\Backend.genruntimeconfig.cache
 D:\KreativeLabs\jobmart2\Backend\obj\Debug\net10.0\ref\Backend.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Graph.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Graph.Core.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.IdentityModel.Validators.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.IO.RecyclableMemoryStream.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Abstractions.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Authentication.Azure.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Http.HttpClientLibrary.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Serialization.Form.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Serialization.Json.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Serialization.Multipart.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Microsoft.Kiota.Serialization.Text.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Std.UriTemplate.dll
+D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\System.ClientModel.dll
