@@ -1,7 +1,11 @@
-public class CandidateResume {
-    public int Id { get; set; }
-    public string FileName { get; set; } = string.Empty;
-    public string FilePath { get; set; } = string.Empty;
-    public int AiScore { get; set; } // AI analysis result
-    public DateTime UploadedAt { get; set; } = DateTime.Now;
+namespace Backend.Models
+{
+    public class Candidate
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string PasswordHash { get; set; }
+        public Resume Resume { get; set; } // One-to-one relationship
+    }
 }

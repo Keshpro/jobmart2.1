@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\KreativeLabs\\jobmart\\Backend\\Backend.csproj": {}
+    "D:\\KreativeLabs\\jobmart2\\Backend\\Backend.csproj": {}
   },
   "projects": {
-    "D:\\KreativeLabs\\jobmart\\Backend\\Backend.csproj": {
+    "D:\\KreativeLabs\\jobmart2\\Backend\\Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\KreativeLabs\\jobmart\\Backend\\Backend.csproj",
+        "projectUniqueName": "D:\\KreativeLabs\\jobmart2\\Backend\\Backend.csproj",
         "projectName": "Backend",
-        "projectPath": "D:\\KreativeLabs\\jobmart\\Backend\\Backend.csproj",
+        "projectPath": "D:\\KreativeLabs\\jobmart2\\Backend\\Backend.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "D:\\KreativeLabs\\jobmart\\Backend\\obj\\",
+        "outputPath": "D:\\KreativeLabs\\jobmart2\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
