@@ -9,7 +9,7 @@ namespace Backend.Data
 
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<CandidateProfile> CandidateProfiles { get; set; }
+        public DbSet<Candidate> Candidates { get; set; }
         public DbSet<JobPosting> JobPostings { get; set; }
         public DbSet<Application> Applications { get; set; }
         public DbSet<Resume> Resumes { get; set; }
@@ -22,7 +22,6 @@ namespace Backend.Data
 {
     base.OnModelCreating(modelBuilder);
 
-    // Primary Key සැකසීම
     modelBuilder.Entity<CandidateProfile>().HasKey(c => c.CandidateId);
     modelBuilder.Entity<Role>().HasKey(r => r.RoleId);
     modelBuilder.Entity<User>().HasKey(u => u.UserId);
@@ -32,8 +31,8 @@ namespace Backend.Data
     modelBuilder.Entity<Skill>().HasKey(s => s.SkillId);
     modelBuilder.Entity<Interview>().HasKey(i => i.InterviewId);
     modelBuilder.Entity<Evaluation>().HasKey(e => e.EvaluationId);
-
-    // Junction table සඳහා Primary Key
+    
+    // Junction table
     modelBuilder.Entity<JobSkill>().HasKey(js => new { js.JobId, js.SkillId });
 }
     }

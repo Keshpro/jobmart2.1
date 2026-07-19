@@ -5,5 +5,6 @@ namespace Backend.Models {
         public required string PasswordHash { get; set; }
         public int RoleId { get; set; }
         public required Role Role { get; set; }
+        public required string Username { get; set; }
     }
 }
