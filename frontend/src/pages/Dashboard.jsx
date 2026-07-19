@@ -31,7 +31,7 @@ const Dashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        navigate('/register');
+        navigate('/');
     };
 
     if (isLoading) {
