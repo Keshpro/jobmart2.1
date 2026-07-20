@@ -7,6 +7,7 @@ using Backend.Models;
 using Backend.DTOs;
 using Microsoft.Graph;
 using Azure.Identity;
+using Supabase;
 
 namespace Backend.Controllers
 {
@@ -90,60 +91,41 @@ namespace Backend.Controllers
             var username = User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrEmpty(email)) return Unauthorized();
 
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             string shareableUrl = string.Empty;
 
             try
             {
-                // 1. OneDrive (Microsoft Graph API) වෙත සම්බන්ධ වීම
-                var tenantId = "YOUR_AZURE_TENANT_ID";
-                var clientId = "YOUR_AZURE_CLIENT_ID";
-                var clientSecret = "YOUR_AZURE_CLIENT_SECRET";
-                var adminUserId = "YOUR_ONEDRIVE_ACCOUNT_OBJECT_ID";
+                // 1. Supabase Settings appsettings.json එකෙන් ලබා ගැනීම (IConfiguration හරහා මෙය constructor එකෙන් ගැනීම වඩාත් සුදුසුයි, නමුත් මෙහි සරලව දක්වා ඇත)
+                var supabaseUrl = "ඔබගේ_SUPABASE_PROJECT_URL_එක"; 
+                var supabaseKey = "ඔබගේ_SUPABASE_ANON_KEY_එක";
 
-                var credentials = new ClientSecretCredential(tenantId, clientId, clientSecret);
-                var graphClient = new GraphServiceClient(credentials);
+                // 2. Supabase Client එක Initialize කිරීම
+                var options = new SupabaseOptions { AutoConnectRealtime = false };
+                var supabase = new Supabase.Client(supabaseUrl, supabaseKey, options);
+                await supabase.InitializeAsync();
 
-                // 2. File එක Memory එකට අරගෙන OneDrive එකට Upload කිරීම
-                using (var stream = new MemoryStream())
+                // 3. File එක byte array එකක් බවට පත් කිරීම
+                using (var memoryStream = new MemoryStream())
                 {
-                    await file.CopyToAsync(stream);
-                    stream.Position = 0;
+                    await file.CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
 
-                    var uploadPath = $"Resumes/{fileName}";
-
-                    // --- දෝෂය නිවැරදි කළ ස්ථානය මෙතැන් සිට ---
-
-                    // පියවර 2.1: අදාළ User ගේ Drive එක ලබාගැනීම
-                    var drive = await graphClient.Users[adminUserId].Drive.GetAsync();
-                    var driveId = drive?.Id;
-
-                    // පියවර 2.2: v5 Indexer ක්‍රමය භාවිතා කර File එක Upload කිරීම
-                    var uploadedItem = await graphClient.Drives[driveId].Items[$"root:/{uploadPath}:"]
-                        .Content.PutAsync(stream);
-
-                    // 3. Upload වුණු File එකට Shareable Link එකක් සෑදීම
-                    // v5 හි නිවැරදි Namespace එක යොදා ඇත
-                    var requestBody = new Microsoft.Graph.Drives.Item.Items.Item.CreateLink.CreateLinkPostRequestBody
-                    {
-                        Type = "view",
-                        Scope = "anonymous"
-                    };
-
-                    var linkResult = await graphClient.Drives[driveId].Items[uploadedItem?.Id]
-                        .CreateLink.PostAsync(requestBody);
-
-                    shareableUrl = linkResult?.Link?.WebUrl ?? string.Empty;
-
-                    // --- වෙනස් කළ කොටස අවසන් ---
+                    // 4. Supabase Storage හි "resumes" Bucket එකට Upload කිරීම
+                    await supabase.Storage
+                        .From("resumes")
+                        .Upload(fileBytes, fileName, new Supabase.Storage.FileOptions { CacheControl = "3600", Upsert = true });
                 }
+
+                // 5. Upload වූ File එකෙහි Public URL එක ලබා ගැනීම
+                shareableUrl = supabase.Storage.From("resumes").GetPublicUrl(fileName);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "OneDrive Upload Failed", error = ex.Message });
+                return StatusCode(500, new { message = "Supabase Upload Failed", error = ex.Message });
             }
 
-            // 4. Database එකේ URL එක Update කිරීම
+            // 6. Database එකේ URL එක Update කිරීම
             var candidate = await _context.Candidates.FirstOrDefaultAsync(c => c.Email == email);
 
             if (candidate == null)
@@ -164,7 +146,7 @@ namespace Backend.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Resume uploaded to OneDrive successfully!", path = shareableUrl });
+            return Ok(new { message = "Resume uploaded to Supabase successfully!", path = shareableUrl });
         }
     }
 }
