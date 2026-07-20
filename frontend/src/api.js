@@ -2,12 +2,9 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: 'http://localhost:5183', 
-    headers: {
-        'Content-Type': 'application/json'
-    }
+    // Content-Type මෙතනින් ඉවත් කළා, එවිට Axios ඉබේම අදාළ විදියට Header එක හදාගන්නවා
 });
 
-// මේ කොටස අනිවාර්යයෙන්ම තිබිය යුතුයි! (මෙයින් තමයි Token එක යවන්නේ)
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
