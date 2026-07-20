@@ -44,5 +44,10 @@ namespace Backend.Data
             // Junction table
             modelBuilder.Entity<JobSkill>().HasKey(js => new { js.JobId, js.SkillId });
         }
+
+        internal object CreateConnection()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
