@@ -172,3 +172,4 @@ D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\System.Management.dll
 D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\System.Reactive.dll
 D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\Websocket.Client.dll
 D:\KreativeLabs\jobmart2\Backend\bin\Debug\net10.0\runtimes\win\lib\net7.0\System.Management.dll
+C:\Users\user\Documents\GitHub\jobmart2.1\Backend\obj\Debug\net10.0\Backend.pdb
