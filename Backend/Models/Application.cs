@@ -5,7 +5,6 @@ namespace Backend.Models {
         public int JobId { get; set; }
         public required string Status { get; set; }
         public DateTime AppliedDate { get; set; }
-        public required CandidateProfile CandidateProfile { get; set; }
         public required JobPosting JobPosting { get; set; }
     }
 }

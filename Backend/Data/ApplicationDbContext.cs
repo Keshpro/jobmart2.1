@@ -19,21 +19,30 @@ namespace Backend.Data
         public DbSet<Evaluation> Evaluations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    base.OnModelCreating(modelBuilder);
+        {
+            base.OnModelCreating(modelBuilder);
 
-    modelBuilder.Entity<CandidateProfile>().HasKey(c => c.CandidateId);
-    modelBuilder.Entity<Role>().HasKey(r => r.RoleId);
-    modelBuilder.Entity<User>().HasKey(u => u.UserId);
-    modelBuilder.Entity<JobPosting>().HasKey(j => j.JobId);
-    modelBuilder.Entity<Application>().HasKey(a => a.ApplicationId);
-    modelBuilder.Entity<Resume>().HasKey(r => r.ResumeId);
-    modelBuilder.Entity<Skill>().HasKey(s => s.SkillId);
-    modelBuilder.Entity<Interview>().HasKey(i => i.InterviewId);
-    modelBuilder.Entity<Evaluation>().HasKey(e => e.EvaluationId);
-    
-    // Junction table
-    modelBuilder.Entity<JobSkill>().HasKey(js => new { js.JobId, js.SkillId });
-}
+            // 1. මෙතන තිබුණු "CandidateProfile" යන්න "Candidate" ලෙස නිවැරදි කර ඇත
+            modelBuilder.Entity<Candidate>().HasKey(c => c.CandidateId);
+
+            // 2. User සහ Candidate අතර ඇති සම්බන්ධය (Foreign Key Relationship) පැහැදිලිව දැක්වීම
+            modelBuilder.Entity<Candidate>()
+                .HasOne(c => c.User)
+                .WithMany() 
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Role>().HasKey(r => r.RoleId);
+            modelBuilder.Entity<User>().HasKey(u => u.UserId);
+            modelBuilder.Entity<JobPosting>().HasKey(j => j.JobId);
+            modelBuilder.Entity<Application>().HasKey(a => a.ApplicationId);
+            modelBuilder.Entity<Resume>().HasKey(r => r.ResumeId);
+            modelBuilder.Entity<Skill>().HasKey(s => s.SkillId);
+            modelBuilder.Entity<Interview>().HasKey(i => i.InterviewId);
+            modelBuilder.Entity<Evaluation>().HasKey(e => e.EvaluationId);
+            
+            // Junction table
+            modelBuilder.Entity<JobSkill>().HasKey(js => new { js.JobId, js.SkillId });
+        }
     }
 }

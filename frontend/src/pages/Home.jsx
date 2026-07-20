@@ -1,352 +1,247 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import ChatBot from '../components/AiChatbot';
-import {
-  BrainCircuit, Search, BriefcaseBusiness, BarChart3,
-  Users, CheckCircle, ArrowRight, Zap, MapPin, Sparkles
+import React, { useState } from 'react';
+import { 
+  Search, MapPin, Briefcase, Filter, ChevronDown, 
+  Bookmark, Star, Sparkles, X, Send, Bot, Building2, 
+  GraduationCap, Stethoscope, Calculator, Palette, Wrench
 } from 'lucide-react';
 
-/* ---------------------------------------------------------------------
-   Design tokens (see comment block at bottom for rationale + font setup)
---------------------------------------------------------------------- */
-const GREEN = '#4A7C59';   // Executive Green — existing JobMart brand color
-const GOLD = '#C9A227';    // Signal Gold — reserved for "AI is working" moments
-const INK = '#0F172A';     // slate-900
-const MIST = '#64748B';    // slate-500
-
-/* ---------------------------------------------------------------------
-   Lightweight scroll-reveal (no framer-motion dependency required).
-   Swap the transition below for a <motion.div> if framer-motion is
-   already installed in this project.
---------------------------------------------------------------------- */
-const useReveal = () => {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  return [ref, visible];
-};
-
-const Reveal = ({ children, className = '', delay = 0 }) => {
-  const [ref, visible] = useReveal();
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(28px)',
-        transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
-/* ---------------------------------------------------------------------
-   Content
---------------------------------------------------------------------- */
-const trustedCompanies = ['TechCorp', 'Nexora', 'BlueHarbor', 'Finlytics', 'Orbit Labs', 'Vantage Cloud'];
-
-const steps = [
-  { step: '01', title: 'Build your profile', desc: 'Upload a resume once — the parser reads your skills, roles and years of experience for you.' },
-  { step: '02', title: 'Get AI-matched', desc: 'Gemini scores every open role against your profile and ranks the closest fits first.' },
-  { step: '03', title: 'Interview and get hired', desc: 'Apply in one click and track every interview stage from a single dashboard.' },
-];
-
-const features = [
-  { icon: BrainCircuit, title: 'Resume Parsing', desc: 'Skills, titles and experience are extracted automatically — no forms to fill twice.' },
-  { icon: Search, title: 'NLP Job Search', desc: "Search the way you'd describe the job to a friend, not the way a filter menu expects." },
-  { icon: BarChart3, title: 'Skill Matching', desc: 'Every listing shows a match score, so you know why a role was suggested to you.' },
-  { icon: Zap, title: 'Real-Time Alerts', desc: 'New roles that clear your match threshold reach you the moment they go live.' },
+// --- Dummy Data ---
+const categories = [
+  { name: 'IT & Software', icon: <Briefcase size={20} />, count: '1,240' },
+  { name: 'Healthcare', icon: <Stethoscope size={20} />, count: '850' },
+  { name: 'Finance', icon: <Calculator size={20} />, count: '620' },
+  { name: 'Education', icon: <GraduationCap size={20} />, count: '430' },
+  { name: 'Engineering', icon: <Wrench size={20} />, count: '910' },
+  { name: 'Design', icon: <Palette size={20} />, count: '320' },
 ];
 
 const jobs = [
-  { title: 'Senior Software Engineer', company: 'TechCorp Inc.', location: 'Remote', match: 96 },
-  { title: 'Product Manager', company: 'Nexora', location: 'Colombo · Hybrid', match: 91 },
-  { title: 'AI Researcher', company: 'Orbit Labs', location: 'Remote', match: 88 },
+  { id: 1, title: 'Senior Software Engineer', company: 'TechNova', location: 'Colombo, LK', type: 'Full-Time', salary: '$80k - $120k', match: 94, time: '2h ago', skills: ['React', 'Node.js', 'AWS'] },
+  { id: 2, title: 'Registered Nurse', company: 'CarePlus Hospital', location: 'Kandy, LK', type: 'Full-Time', salary: '$50k - $70k', match: 88, time: '5h ago', skills: ['Patient Care', 'BLS', 'EMR'] },
+  { id: 3, title: 'Marketing Executive', company: 'Global Reach', location: 'Remote', type: 'Contract', salary: '$40k - $60k', match: 76, time: '1d ago', skills: ['SEO', 'Content', 'Analytics'] },
+  { id: 4, title: 'Financial Analyst', company: 'Vertex Capital', location: 'Colombo, LK', type: 'Full-Time', salary: '$60k - $90k', match: 91, time: '1d ago', skills: ['Excel', 'Financial Modeling'] },
+  { id: 5, title: 'Civil Engineer', company: 'BuildRight Construction', location: 'Galle, LK', type: 'Full-Time', salary: '$70k - $100k', match: 82, time: '2d ago', skills: ['AutoCAD', 'Project Management'] },
+  { id: 6, title: 'Hotel Manager', company: 'Luxury Stays', location: 'Nuwara Eliya, LK', type: 'Full-Time', salary: '$55k - $85k', match: 79, time: '2d ago', skills: ['Hospitality', 'Operations'] },
 ];
 
-/* ---------------------------------------------------------------------
-   Signature element: the Live Match Scanner
-   Makes "the AI is working" visible (Nielsen: visibility of system
-   status) instead of stating it in a stat card.
---------------------------------------------------------------------- */
-const MatchScanner = () => {
-  const skills = ['React', 'System Design', 'Node.js', 'Leadership'];
-  return (
-    <div style={{
-      background: '#fff',
-      border: '1px solid #E2E8F0',
-      borderRadius: 24,
-      padding: 28,
-      boxShadow: '0 24px 60px -20px rgba(15,23,42,0.25)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <span style={{
-          width: 8, height: 8, borderRadius: '50%', background: GOLD,
-          animation: 'jm-pulse 1.6s ease-in-out infinite',
-        }} />
-        <span style={{
-          fontFamily: "'IBM Plex Mono', monospace", fontSize: 12,
-          letterSpacing: '0.08em', color: MIST, textTransform: 'uppercase',
-        }}>
-          AI matching · live
-        </span>
-      </div>
+const GREEN = '#4A7C59';
+const INK = '#0F172A';
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-        <div style={{
-          width: 96, height: 96, borderRadius: '50%', flexShrink: 0,
-          background: `conic-gradient(${GREEN} 0% 94%, #E2E8F0 94% 100%)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{
-            width: 76, height: 76, borderRadius: '50%', background: '#fff',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 20, color: INK }}>94%</span>
-            <span style={{ fontSize: 10, color: MIST }}>match</span>
-          </div>
-        </div>
-        <div>
-          <p style={{ fontWeight: 700, color: INK, marginBottom: 2 }}>Senior Software Engineer</p>
-          <p style={{ fontSize: 13, color: MIST }}>Scored against your resume just now</p>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 20 }}>
-        {skills.map((s, i) => (
-          <span key={s} style={{
-            fontSize: 12, fontWeight: 600, color: GREEN,
-            background: 'rgba(74,124,89,0.1)', border: `1px solid rgba(74,124,89,0.25)`,
-            borderRadius: 999, padding: '5px 12px',
-            opacity: 0, animation: `jm-chip-in 0.5s ease forwards ${0.4 + i * 0.18}s`,
-          }}>
-            {s}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ---------------------------------------------------------------------
-   Page
---------------------------------------------------------------------- */
-const Home = () => {
-  const [role, setRole] = useState('');
-  const [location, setLocation] = useState('');
+export default function JobSearchPage() {
+  const [chatOpen, setChatOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white" style={{ color: INK }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
-        .jm-display { font-family: 'Fraunces', serif; }
-        @keyframes jm-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-        @keyframes jm-chip-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes jm-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .jm-marquee-track { animation: jm-marquee 26s linear infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .jm-marquee-track { animation: none; }
-        }
-      `}</style>
-
-      <Navbar />
-
-      {/* Hero */}
-      <section className="px-6 pt-20 pb-16 max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full" style={{ background: 'rgba(74,124,89,0.08)' }}>
-              <Sparkles size={14} color={GREEN} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: GREEN, letterSpacing: '0.02em' }}>Powered by Google Gemini</span>
-            </div>
-            <h1 className="jm-display" style={{ fontSize: 'clamp(2.75rem, 5vw, 4rem)', lineHeight: 1.05, fontWeight: 600, marginBottom: 20 }}>
-              Hiring that reads<br />the room, not just<br />the resume.
-            </h1>
-            <p style={{ fontSize: 18, color: MIST, maxWidth: 440, marginBottom: 32 }}>
-              JobMart scores every role against your actual skills, so the first thing you see is the job worth applying to.
-            </p>
-
-            {/* Primary action — the single thing this page wants you to do */}
-            <div className="flex flex-col sm:flex-row gap-3 p-3 rounded-2xl" style={{ background: '#F8FAF9', border: '1px solid #E2E8F0' }}>
-              <div className="flex items-center gap-2 flex-1 px-3">
-                <Search size={18} color={MIST} />
-                <input
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  placeholder="Job title or skill"
-                  className="w-full bg-transparent outline-none py-2 text-sm"
-                />
-              </div>
-              <div className="hidden sm:block w-px bg-slate-200" />
-              <div className="flex items-center gap-2 flex-1 px-3">
-                <MapPin size={18} color={MIST} />
-                <input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Location"
-                  className="w-full bg-transparent outline-none py-2 text-sm"
-                />
-              </div>
-              <Link
-                to="/register"
-                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-sm whitespace-nowrap"
-                style={{ background: GREEN }}
-              >
-                Find Matches <ArrowRight size={16} />
-              </Link>
-            </div>
-            <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: MIST, marginTop: 12 }}>
-              scanning 12,500 live roles right now
-            </p>
-          </div>
-
-          <Reveal delay={150}>
-            <MatchScanner />
-          </Reveal>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      
+      {/* Hero Section */}
+      <div className="pt-16 pb-12 px-6 max-w-7xl mx-auto">
+        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100">
+          <Sparkles size={14} /> Powered by JobMart AI
         </div>
-      </section>
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[#0F172A] mb-4 font-serif">
+          Find Your <span style={{ color: GREEN }}>Dream Career</span>
+        </h1>
+        <p className="text-lg text-slate-500 mb-10 max-w-2xl">
+          Explore thousands of verified opportunities across every industry. Our AI matches your skills to the perfect role.
+        </p>
 
-      {/* Trust strip — social proof, keeps it honest with a marquee not a claim */}
-      <section className="py-8 border-y" style={{ borderColor: '#E2E8F0', background: '#F8FAF9' }}>
-        <div className="overflow-hidden max-w-7xl mx-auto px-6">
-          <p style={{ fontSize: 11, letterSpacing: '0.1em', color: MIST, textTransform: 'uppercase', marginBottom: 16, textAlign: 'center' }}>
-            Hiring teams already matching on JobMart
-          </p>
-          <div className="flex overflow-hidden">
-            <div className="jm-marquee-track flex gap-16 pr-16 shrink-0">
-              {[...trustedCompanies, ...trustedCompanies].map((c, i) => (
-                <span key={i} className="whitespace-nowrap" style={{ fontWeight: 700, fontSize: 18, color: '#CBD5E1' }}>
-                  {c}
-                </span>
-              ))}
-            </div>
+        {/* Search Bar */}
+        <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-2 max-w-4xl">
+          <div className="flex-1 flex items-center px-4 py-3 bg-slate-50 rounded-xl border border-transparent focus-within:border-emerald-200 focus-within:bg-white transition-colors">
+            <Search size={20} className="text-slate-400 mr-3" />
+            <input type="text" placeholder="Job title or skill" className="bg-transparent w-full focus:outline-none text-slate-700" />
           </div>
+          <div className="flex-1 flex items-center px-4 py-3 bg-slate-50 rounded-xl border border-transparent focus-within:border-emerald-200 focus-within:bg-white transition-colors">
+            <MapPin size={20} className="text-slate-400 mr-3" />
+            <input type="text" placeholder="Location" className="bg-transparent w-full focus:outline-none text-slate-700" />
+          </div>
+          <button 
+            className="px-8 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
+            style={{ background: GREEN }}
+          >
+            Find Matches
+          </button>
         </div>
-      </section>
+        <p className="text-xs text-slate-400 mt-4 font-mono uppercase tracking-wider">
+          scanning 12,500 live roles right now
+        </p>
+      </div>
 
-      {/* How it works — a real sequence, so numbering earns its place */}
-      <section className="py-24 max-w-7xl mx-auto px-6">
-        <Reveal>
-          <h2 className="jm-display" style={{ fontSize: 34, fontWeight: 600, textAlign: 'center', marginBottom: 56 }}>
-            From resume to interview, in three steps
-          </h2>
-        </Reveal>
-        <div className="grid md:grid-cols-3 gap-8">
-          {steps.map((item, i) => (
-            <Reveal key={item.step} delay={i * 120}>
-              <div className="p-8 rounded-2xl h-full" style={{ borderLeft: `3px solid ${GREEN}`, background: '#F8FAF9' }}>
-                <span className="jm-display" style={{ fontSize: 15, fontWeight: 600, color: GREEN }}>{item.step}</span>
-                <h3 style={{ fontSize: 20, fontWeight: 700, margin: '10px 0 8px' }}>{item.title}</h3>
-                <p style={{ color: MIST, fontSize: 15 }}>{item.desc}</p>
+      {/* Categories Horizontal Scroll */}
+      <div className="border-y border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex gap-4 overflow-x-auto no-scrollbar">
+          {categories.map((cat, idx) => (
+            <button key={idx} className="flex-shrink-0 flex items-center gap-3 px-5 py-3 rounded-xl border border-slate-200 hover:border-[#4A7C59] hover:shadow-md transition-all group bg-white">
+              <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-[#4A7C59] transition-colors">
+                {cat.icon}
               </div>
-            </Reveal>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-slate-800">{cat.name}</p>
+                <p className="text-xs text-slate-500">{cat.count} jobs</p>
+              </div>
+            </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* Features */}
-      <section className="py-24 px-6" style={{ background: INK }}>
-        <div className="max-w-7xl mx-auto">
-          <Reveal>
-            <h2 className="jm-display" style={{ fontSize: 34, fontWeight: 600, color: '#fff', marginBottom: 12 }}>
-              What the AI is actually doing
-            </h2>
-            <p style={{ color: '#94A3B8', marginBottom: 48, maxWidth: 520 }}>
-              Not a black box — here's what runs behind every match score.
-            </p>
-          </Reveal>
-          <div className="grid md:grid-cols-2 gap-6">
-            {features.map((f, i) => (
-              <Reveal key={f.title} delay={i * 100}>
-                <div className="p-7 rounded-2xl h-full" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <f.icon size={22} color={GOLD} style={{ marginBottom: 14 }} />
-                  <h3 style={{ color: '#fff', fontWeight: 700, fontSize: 17, marginBottom: 6 }}>{f.title}</h3>
-                  <p style={{ color: '#94A3B8', fontSize: 14, lineHeight: 1.6 }}>{f.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-8">
+        
+        {/* Left Sidebar Filters */}
+        <div className="w-full lg:w-64 flex-shrink-0">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 sticky top-24">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-bold text-lg">Filters</h3>
+              <Filter size={18} className="text-slate-400" />
+            </div>
+
+            {/* Filter Group: Job Type */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-slate-800 mb-3">Job Type</h4>
+              <div className="space-y-2.5">
+                {['Full-Time', 'Part-Time', 'Contract', 'Remote'].map(type => (
+                  <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-[#4A7C59] focus:ring-[#4A7C59]" />
+                    <span className="text-sm text-slate-600 group-hover:text-slate-900">{type}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Filter Group: Experience */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-slate-800 mb-3">Experience Level</h4>
+              <div className="space-y-2.5">
+                {['Entry Level', 'Mid Level', 'Senior', 'Director'].map(level => (
+                  <label key={level} className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-[#4A7C59] focus:ring-[#4A7C59]" />
+                    <span className="text-sm text-slate-600 group-hover:text-slate-900">{level}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* Featured jobs */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
-          <Reveal>
-            <h2 className="jm-display" style={{ fontSize: 34, fontWeight: 600, marginBottom: 40, textAlign: 'center' }}>
-              Top matches this week
-            </h2>
-          </Reveal>
-          <div className="space-y-4">
-            {jobs.map((job, i) => (
-              <Reveal key={job.title} delay={i * 100}>
-                <div
-                  className="flex justify-between items-center p-6 rounded-2xl transition-all hover:shadow-md"
-                  style={{ background: '#fff', border: '1px solid #E2E8F0' }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                      background: 'rgba(74,124,89,0.1)', display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <BriefcaseBusiness size={20} color={GREEN} />
+        {/* Right Content - Job Grid */}
+        <div className="flex-1">
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-slate-500 text-sm">Showing <span className="font-semibold text-slate-900">1–12</span> of 4,250 jobs</p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">Sort by:</span>
+              <button className="flex items-center gap-1 text-sm font-semibold text-slate-800 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                AI Recommended <ChevronDown size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {jobs.map(job => (
+              <div key={job.id} className="bg-white p-5 rounded-2xl border border-slate-200 hover:shadow-xl hover:border-emerald-200 transition-all group relative overflow-hidden">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                      <Building2 size={24} />
                     </div>
                     <div>
-                      <h4 style={{ fontWeight: 700, fontSize: 16 }}>{job.title}</h4>
-                      <p style={{ color: MIST, fontSize: 13 }}>{job.company} · {job.location}</p>
+                      <h3 className="font-bold text-slate-900 group-hover:text-[#4A7C59] transition-colors">{job.title}</h3>
+                      <p className="text-sm text-slate-500">{job.company}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-5">
-                    <span style={{
-                      fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, fontWeight: 600,
-                      color: GREEN, background: 'rgba(74,124,89,0.1)', borderRadius: 999, padding: '4px 10px',
-                    }}>
-                      {job.match}% match
-                    </span>
-                    <Link to="/login" className="flex items-center gap-1 font-bold text-sm" style={{ color: GREEN }}>
-                      Apply <ArrowRight size={16} />
-                    </Link>
-                  </div>
+                  <button className="text-slate-400 hover:text-[#C9A227] transition-colors">
+                    <Bookmark size={20} />
+                  </button>
                 </div>
-              </Reveal>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">{job.location}</span>
+                  <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">{job.type}</span>
+                  <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">{job.salary}</span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {job.skills.map(skill => (
+                    <span key={skill} className="text-xs font-mono text-slate-500 border border-slate-200 rounded px-2 py-0.5">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-emerald-500 text-emerald-600 font-bold text-xs bg-emerald-50">
+                      {job.match}%
+                    </div>
+                    <span className="text-xs text-slate-500 font-medium">Match Score</span>
+                  </div>
+                  <button 
+                    className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg"
+                    style={{ background: INK }}
+                  >
+                    Apply Now
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Footer */}
-      <footer className="py-12 border-t text-center" style={{ borderColor: '#E2E8F0' }}>
-        <div className="flex justify-center items-center gap-2 mb-4">
-          <Zap size={18} color={GREEN} />
-          <span className="jm-display" style={{ fontWeight: 600, fontSize: 20 }}>JobMart AI</span>
-        </div>
-        <p style={{ color: MIST, fontSize: 13 }}>© 2026 JobMart Recruitment Platform. All Rights Reserved.</p>
-      </footer>
+      {/* Floating AI Assistant Panel (from image_49b78c.png reference) */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        {chatOpen && (
+          <div className="mb-4 w-[340px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+            <div className="p-4 flex justify-between items-center text-white" style={{ background: INK }}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Bot size={18} className="text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">JobMart Assistant</h4>
+                  <p className="text-xs text-emerald-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setChatOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 h-64 overflow-y-auto bg-slate-50 flex flex-col gap-3">
+              <div className="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm text-sm text-slate-700 border border-slate-100 w-10/12">
+                Hi, I'm the JobMart assistant. Ask me about roles, your match score, or how to strengthen your profile.
+              </div>
+              <div className="bg-[#4A7C59] p-3 rounded-2xl rounded-tr-sm shadow-sm text-sm text-white self-end w-9/12">
+                Help me improve my resume
+              </div>
+              <div className="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm text-sm text-slate-700 border border-slate-100 w-10/12">
+                I can help tighten your resume headline and summary from the Dashboard → AI tab. Want me to take you there?
+              </div>
+            </div>
 
-      <ChatBot />
+            <div className="p-3 bg-white border-t border-slate-100 flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Ask about jobs, matches..." 
+                className="flex-1 bg-slate-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-700"
+              />
+              <button className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-transform hover:scale-105" style={{ background: INK }}>
+                <Send size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button 
+          onClick={() => setChatOpen(!chatOpen)}
+          className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-110"
+          style={{ background: GREEN }}
+        >
+          {chatOpen ? <X size={24} /> : <Sparkles size={24} />}
+        </button>
+      </div>
+
     </div>
   );
-};
-
-export default Home;
+}

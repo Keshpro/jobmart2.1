@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5183', 
-    // Content-Type මෙතනින් ඉවත් කළා, එවිට Axios ඉබේම අදාළ විදියට Header එක හදාගන්නවා
+    baseURL: 'http://localhost:5183'
 });
 
 api.interceptors.request.use(

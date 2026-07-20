@@ -1,38 +1,41 @@
 import React, { useState } from 'react';
 import api from '../api';
 
-// existingResume කියන එක Dashboard එකෙන් මෙතනට ගන්නවා
 const UploadResume = ({ existingResume }) => {
     const [file, setFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadStatus, setUploadStatus] = useState(''); 
-    // අලුතින් upload කරපු එකක් තියෙනවාද කියලා බලන්න අලුත් state එකක්
+    const [uploadStatus, setUploadStatus] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
     const [currentResume, setCurrentResume] = useState(existingResume);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
         setUploadStatus('');
+        setErrorMessage('');
     };
 
     const handleUpload = async () => {
         if (!file) return alert("Please select a file first.");
 
         setIsUploading(true);
+        setErrorMessage('');
         const formData = new FormData();
-        formData.append("file", file); 
+        formData.append("file", file);
 
         try {
-            const response = await api.post('/api/candidate/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
+            const response = await api.post('/api/candidate/upload', formData);
+
             setUploadStatus('success');
-            // Upload වුණාට පස්සේ අලුත් නම currentResume එකට දානවා (refresh නොකරම පෙන්නන්න)
             setCurrentResume(response.data.path || file.name);
-            setFile(null); // Upload වුණාට පස්සේ තෝරපු file එක clear කරනවා
-            
+            setFile(null);
+
         } catch (error) {
-            console.error("Upload error:", error);
+            // backend එකෙන් එන exact error message එක console එකට සහ UI එකට පෙන්නනවා
+            const backendMessage = error.response?.data?.title
+                || error.response?.data
+                || error.message;
+            console.error("Upload error:", backendMessage);
+            setErrorMessage(typeof backendMessage === 'string' ? backendMessage : 'Upload failed.');
             setUploadStatus('error');
         } finally {
             setIsUploading(false);
@@ -41,8 +44,6 @@ const UploadResume = ({ existingResume }) => {
 
     return (
         <div className="w-full">
-            
-            {/* කලින් Upload කරපු CV එකක් තියෙනවා නම් ඒක මෙතන පෙන්වනවා */}
             {currentResume && (
                 <div className="mb-6 bg-neutral-950 p-4 rounded-xl border border-green-900/50 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -60,15 +61,15 @@ const UploadResume = ({ existingResume }) => {
             )}
 
             <div className="border-2 border-dashed border-neutral-700 bg-neutral-950 hover:border-red-600/50 transition-colors rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                <input 
-                    type="file" 
+                <input
+                    type="file"
                     id="resume-upload"
                     className="hidden"
                     onChange={handleFileChange}
                     accept=".pdf,.doc,.docx"
                 />
-                <label 
-                    htmlFor="resume-upload" 
+                <label
+                    htmlFor="resume-upload"
                     className="cursor-pointer flex flex-col items-center gap-3 w-full"
                 >
                     <div className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400">
@@ -86,7 +87,7 @@ const UploadResume = ({ existingResume }) => {
             {file && (
                 <div className="mt-4 flex items-center justify-between bg-neutral-800 p-3 rounded-lg border border-neutral-700">
                     <span className="text-sm text-neutral-300 truncate max-w-[200px]">{file.name}</span>
-                    <button 
+                    <button
                         onClick={handleUpload}
                         disabled={isUploading}
                         className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded font-medium transition disabled:opacity-50"
@@ -103,7 +104,7 @@ const UploadResume = ({ existingResume }) => {
             )}
             {uploadStatus === 'error' && (
                 <p className="mt-3 text-sm text-red-500 flex items-center gap-2">
-                    ⚠ Failed to upload resume. Please try again.
+                    ⚠ {errorMessage || 'Failed to upload resume. Please try again.'}
                 </p>
             )}
         </div>
