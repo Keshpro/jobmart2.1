@@ -1,205 +1,369 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../api'; // Ensure correct path to your axios instance
 import { 
-  Search, MapPin, Briefcase, Filter, ChevronDown, 
-  Bookmark, Star, Sparkles, X, Send, Bot, Building2, 
-  GraduationCap, Stethoscope, Calculator, Palette, Wrench
+  LayoutDashboard, Search, Briefcase, FileText, Bell, 
+  UploadCloud, BrainCircuit, CheckCircle, Clock, XCircle, 
+  ChevronRight, Settings, LogOut, Sparkles, Bot, X, Send, User, AlertCircle
 } from 'lucide-react';
-
-// --- Dummy Data ---
-const categories = [
-  { name: 'IT & Software', icon: <Briefcase size={20} />, count: '1,240' },
-  { name: 'Healthcare', icon: <Stethoscope size={20} />, count: '850' },
-  { name: 'Finance', icon: <Calculator size={20} />, count: '620' },
-  { name: 'Education', icon: <GraduationCap size={20} />, count: '430' },
-  { name: 'Engineering', icon: <Wrench size={20} />, count: '910' },
-  { name: 'Design', icon: <Palette size={20} />, count: '320' },
-];
-
-const jobs = [
-  { id: 1, title: 'Senior Software Engineer', company: 'TechNova', location: 'Colombo, LK', type: 'Full-Time', salary: '$80k - $120k', match: 94, time: '2h ago', skills: ['React', 'Node.js', 'AWS'] },
-  { id: 2, title: 'Registered Nurse', company: 'CarePlus Hospital', location: 'Kandy, LK', type: 'Full-Time', salary: '$50k - $70k', match: 88, time: '5h ago', skills: ['Patient Care', 'BLS', 'EMR'] },
-  { id: 3, title: 'Marketing Executive', company: 'Global Reach', location: 'Remote', type: 'Contract', salary: '$40k - $60k', match: 76, time: '1d ago', skills: ['SEO', 'Content', 'Analytics'] },
-  { id: 4, title: 'Financial Analyst', company: 'Vertex Capital', location: 'Colombo, LK', type: 'Full-Time', salary: '$60k - $90k', match: 91, time: '1d ago', skills: ['Excel', 'Financial Modeling'] },
-  { id: 5, title: 'Civil Engineer', company: 'BuildRight Construction', location: 'Galle, LK', type: 'Full-Time', salary: '$70k - $100k', match: 82, time: '2d ago', skills: ['AutoCAD', 'Project Management'] },
-  { id: 6, title: 'Hotel Manager', company: 'Luxury Stays', location: 'Nuwara Eliya, LK', type: 'Full-Time', salary: '$55k - $85k', match: 79, time: '2d ago', skills: ['Hospitality', 'Operations'] },
-];
 
 const GREEN = '#4A7C59';
 const INK = '#0F172A';
 
-export default function JobSearchPage() {
+export default function CandidateDashboard() {
+  // --- States for Real Data ---
+  const [username, setUsername] = useState(localStorage.getItem('username') || 'Candidate');
+  const [kpis, setKpis] = useState({ applied: 0, pending: 0, interviews: 0, rejections: 0 });
+  const [extractedSkills, setExtractedSkills] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [recentApplications, setRecentApplications] = useState([]);
+  
+  const [isUploading, setIsUploading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- Custom Beautiful Toast Notification State ---
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showNotification = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 4000); // Auto-hide after 4 seconds
+  };
+
+  // --- Fetch Dashboard Data ---
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        // Replace these endpoints with your actual backend routes
+        
+        // 1. Fetch Profile Data (for updated username and skills)
+        const profileRes = await api.get('/api/candidate/profile');
+        if (profileRes.data?.username) setUsername(profileRes.data.username);
+        if (profileRes.data?.skills) setExtractedSkills(profileRes.data.skills);
+
+        // 2. Fetch KPIs
+        const kpiRes = await api.get('/api/candidate/kpis');
+        if (kpiRes.data) setKpis(kpiRes.data);
+
+        // 3. Fetch Recent Applications
+        const appsRes = await api.get('/api/candidate/applications/recent');
+        if (appsRes.data) setRecentApplications(appsRes.data);
+
+        // 4. Fetch AI Recommended Jobs
+        const jobsRes = await api.get('/api/ai/recommendations');
+        if (jobsRes.data) setRecommendedJobs(jobsRes.data);
+
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        showNotification("Failed to load some dashboard data.", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // --- Handle CV Upload ---
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    try {
+      setIsUploading(true);
+      
+      // Call Backend API to upload to Supabase and Parse via AI
+      const response = await api.post('/api/candidate/upload-cv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data?.skills) {
+        setExtractedSkills(response.data.skills); // Update skills from AI parsing
+      }
+      
+      showNotification("CV Uploaded and Parsed by AI successfully!", "success");
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      showNotification(error.response?.data?.message || "Failed to upload CV. Try again.", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-slate-50 flex font-sans relative">
       
-      {/* Hero Section */}
-      <div className="pt-16 pb-12 px-6 max-w-7xl mx-auto">
-        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100">
-          <Sparkles size={14} /> Powered by JobMart AI
-        </div>
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[#0F172A] mb-4 font-serif">
-          Find Your <span style={{ color: GREEN }}>Dream Career</span>
-        </h1>
-        <p className="text-lg text-slate-500 mb-10 max-w-2xl">
-          Explore thousands of verified opportunities across every industry. Our AI matches your skills to the perfect role.
-        </p>
-
-        {/* Search Bar */}
-        <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-2 max-w-4xl">
-          <div className="flex-1 flex items-center px-4 py-3 bg-slate-50 rounded-xl border border-transparent focus-within:border-emerald-200 focus-within:bg-white transition-colors">
-            <Search size={20} className="text-slate-400 mr-3" />
-            <input type="text" placeholder="Job title or skill" className="bg-transparent w-full focus:outline-none text-slate-700" />
-          </div>
-          <div className="flex-1 flex items-center px-4 py-3 bg-slate-50 rounded-xl border border-transparent focus-within:border-emerald-200 focus-within:bg-white transition-colors">
-            <MapPin size={20} className="text-slate-400 mr-3" />
-            <input type="text" placeholder="Location" className="bg-transparent w-full focus:outline-none text-slate-700" />
-          </div>
-          <button 
-            className="px-8 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20"
-            style={{ background: GREEN }}
-          >
-            Find Matches
+      {/* --- Beautiful Custom Toast Notification --- */}
+      {toast.show && (
+        <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 animate-in slide-in-from-top-5 fade-in ${
+          toast.type === 'success' ? 'bg-[#4A7C59] text-white' : 'bg-red-600 text-white'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+          <span className="font-semibold text-sm tracking-wide">{toast.message}</span>
+          <button onClick={() => setToast({ ...toast, show: false })} className="ml-4 opacity-80 hover:opacity-100">
+            <X size={18} />
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-4 font-mono uppercase tracking-wider">
-          scanning 12,500 live roles right now
-        </p>
-      </div>
+      )}
 
-      {/* Categories Horizontal Scroll */}
-      <div className="border-y border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex gap-4 overflow-x-auto no-scrollbar">
-          {categories.map((cat, idx) => (
-            <button key={idx} className="flex-shrink-0 flex items-center gap-3 px-5 py-3 rounded-xl border border-slate-200 hover:border-[#4A7C59] hover:shadow-md transition-all group bg-white">
-              <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-[#4A7C59] transition-colors">
-                {cat.icon}
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-slate-800">{cat.name}</p>
-                <p className="text-xs text-slate-500">{cat.count} jobs</p>
-              </div>
-            </button>
-          ))}
+      {/* 1. Sidebar Navigation */}
+      <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col z-10 relative">
+        <div className="h-20 flex items-center px-6 border-b border-slate-100">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ background: `linear-gradient(135deg, ${GREEN}, #2F5B3F)` }}>
+              <Briefcase size={18} strokeWidth={2} />
+            </div>
+            <span className="text-xl font-bold tracking-tight font-serif" style={{ color: INK }}>
+              Job<span style={{ color: GREEN }}>Mart</span>
+            </span>
+          </Link>
         </div>
-      </div>
+        
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+          <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#4A7C59]/10 text-[#4A7C59] font-medium transition-colors">
+            <LayoutDashboard size={20} /> Dashboard
+          </Link>
+          <Link to="/jobs" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
+            <Search size={20} /> Find Jobs
+          </Link>
+          <Link to="/applications" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
+            <FileText size={20} /> My Applications
+          </Link>
+          <Link to="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
+            <User size={20} /> Profile & CV
+          </Link>
+        </div>
+
+        <div className="p-4 border-t border-slate-100">
+          <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors">
+            <Settings size={20} /> Settings
+          </button>
+          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-50 font-medium transition-colors mt-1">
+            <LogOut size={20} /> Logout
+          </button>
+        </div>
+      </aside>
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-8">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
         
-        {/* Left Sidebar Filters */}
-        <div className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 sticky top-24">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg">Filters</h3>
-              <Filter size={18} className="text-slate-400" />
-            </div>
-
-            {/* Filter Group: Job Type */}
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-slate-800 mb-3">Job Type</h4>
-              <div className="space-y-2.5">
-                {['Full-Time', 'Part-Time', 'Contract', 'Remote'].map(type => (
-                  <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-[#4A7C59] focus:ring-[#4A7C59]" />
-                    <span className="text-sm text-slate-600 group-hover:text-slate-900">{type}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Filter Group: Experience */}
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-slate-800 mb-3">Experience Level</h4>
-              <div className="space-y-2.5">
-                {['Entry Level', 'Mid Level', 'Senior', 'Director'].map(level => (
-                  <label key={level} className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-[#4A7C59] focus:ring-[#4A7C59]" />
-                    <span className="text-sm text-slate-600 group-hover:text-slate-900">{level}</span>
-                  </label>
-                ))}
-              </div>
+        {/* 2. Top Header */}
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10 sticky top-0">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Welcome back, {username}! 👋</h1>
+            <p className="text-sm text-slate-500">Here is your career overview and AI recommendations.</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button className="p-2 text-slate-400 hover:text-[#4A7C59] hover:bg-[#4A7C59]/10 rounded-full transition-colors relative">
+              <Bell size={22} />
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+            </button>
+            <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center overflow-hidden">
+              <span className="font-bold text-slate-500">{username.charAt(0).toUpperCase()}</span>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Right Content - Job Grid */}
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-6">
-            <p className="text-slate-500 text-sm">Showing <span className="font-semibold text-slate-900">1–12</span> of 4,250 jobs</p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Sort by:</span>
-              <button className="flex items-center gap-1 text-sm font-semibold text-slate-800 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
-                AI Recommended <ChevronDown size={14} />
-              </button>
+        {/* Scrollable Dashboard Content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64 text-[#4A7C59] font-medium">
+              <BrainCircuit className="animate-pulse mr-2" size={24} /> Loading your dashboard...
             </div>
-          </div>
+          ) : (
+            <>
+              {/* 3. KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-blue-50 text-blue-500"><Briefcase size={24} /></div>
+                  <div><p className="text-sm font-medium text-slate-500">Total Applied</p><h3 className="text-2xl font-bold text-slate-900">{kpis.applied}</h3></div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-yellow-50 text-yellow-500"><Clock size={24} /></div>
+                  <div><p className="text-sm font-medium text-slate-500">Pending Review</p><h3 className="text-2xl font-bold text-slate-900">{kpis.pending}</h3></div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-[#4A7C59]/10 text-[#4A7C59]"><CheckCircle size={24} /></div>
+                  <div><p className="text-sm font-medium text-slate-500">Interviews</p><h3 className="text-2xl font-bold text-slate-900">{kpis.interviews}</h3></div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-red-50 text-red-500"><XCircle size={24} /></div>
+                  <div><p className="text-sm font-medium text-slate-500">Rejections</p><h3 className="text-2xl font-bold text-slate-900">{kpis.rejections}</h3></div>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {jobs.map(job => (
-              <div key={job.id} className="bg-white p-5 rounded-2xl border border-slate-200 hover:shadow-xl hover:border-emerald-200 transition-all group relative overflow-hidden">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                      <Building2 size={24} />
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                
+                {/* 4. AI Resume Parsing & CV Uploader */}
+                <div className="xl:col-span-1 space-y-6">
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-slate-900">Your Resume</h3>
+                      <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded-md flex items-center gap-1 border border-blue-100">
+                        <Sparkles size={12} /> AI Analyzed
+                      </span>
                     </div>
+                    
+                    {/* Drag & Drop Uploader */}
+                    <label className="border-2 border-dashed border-slate-300 hover:border-[#4A7C59] rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-50 mb-6 group relative overflow-hidden">
+                      <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileUpload} disabled={isUploading} />
+                      {isUploading ? (
+                        <div className="flex flex-col items-center text-[#4A7C59]">
+                          <BrainCircuit size={32} className="mb-2 animate-pulse" />
+                          <span className="text-sm font-medium">AI is parsing your CV...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadCloud size={32} className="text-slate-400 group-hover:text-[#4A7C59] mb-3 transition-colors" />
+                          <span className="text-sm font-medium text-slate-700">Click to upload new CV</span>
+                          <span className="text-xs text-slate-400 mt-1">PDF or DOCX (Max 5MB)</span>
+                        </>
+                      )}
+                    </label>
+
+                    {/* AI Skills Extraction */}
                     <div>
-                      <h3 className="font-bold text-slate-900 group-hover:text-[#4A7C59] transition-colors">{job.title}</h3>
-                      <p className="text-sm text-slate-500">{job.company}</p>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <BrainCircuit size={16} className="text-[#4A7C59]" /> Extracted Skills
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {extractedSkills.length > 0 ? extractedSkills.map((skill, index) => (
+                          <span key={index} className="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-600 text-xs font-medium rounded-lg">
+                            {skill}
+                          </span>
+                        )) : (
+                          <p className="text-sm text-slate-400">Upload your CV to extract skills.</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <button className="text-slate-400 hover:text-[#C9A227] transition-colors">
-                    <Bookmark size={20} />
-                  </button>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">{job.location}</span>
-                  <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">{job.type}</span>
-                  <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">{job.salary}</span>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {job.skills.map(skill => (
-                    <span key={skill} className="text-xs font-mono text-slate-500 border border-slate-200 rounded px-2 py-0.5">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-emerald-500 text-emerald-600 font-bold text-xs bg-emerald-50">
-                      {job.match}%
+                {/* 5. AI Recommended Jobs */}
+                <div className="xl:col-span-2">
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-full">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                          <Sparkles size={20} className="text-[#C9A227]" /> Top AI Recommendations
+                        </h3>
+                        <p className="text-sm text-slate-500">Based on your extracted skills and profile</p>
+                      </div>
+                      <Link to="/jobs" className="text-sm font-medium text-[#4A7C59] hover:underline flex items-center">
+                        View all <ChevronRight size={16} />
+                      </Link>
                     </div>
-                    <span className="text-xs text-slate-500 font-medium">Match Score</span>
+
+                    <div className="space-y-4">
+                      {recommendedJobs.length > 0 ? recommendedJobs.map(job => (
+                        <div key={job.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-[#4A7C59]/30 hover:shadow-md transition-all bg-slate-50/50 group">
+                          <div className="flex gap-4 items-center">
+                            <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
+                              <Briefcase size={20} className="text-slate-400 group-hover:text-[#4A7C59]" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-900">{job.title}</h4>
+                              <p className="text-sm text-slate-500">{job.companyName} • {job.location} • {job.jobType}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-6">
+                            <div className="flex flex-col items-center">
+                              <div className="w-10 h-10 rounded-full border-4 border-[#4A7C59] flex items-center justify-center bg-white shadow-sm">
+                                <span className="text-xs font-bold text-[#4A7C59]">{job.matchScore}%</span>
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-semibold mt-1 uppercase tracking-wide">Match</span>
+                            </div>
+                            <button className="px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:opacity-90 shadow-md" style={{ background: INK }}>
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                          Upload your resume to get AI personalized job matches.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <button 
-                    className="px-4 py-2 rounded-lg text-white text-sm font-semibold transition-all hover:shadow-lg"
-                    style={{ background: INK }}
-                  >
-                    Apply Now
-                  </button>
+                </div>
+
+              </div>
+
+              {/* 6. Notifications and Interview Updates (Recent Applications) */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 mb-6">Recent Applications & Updates</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-sm text-slate-500">
+                        <th className="pb-3 font-semibold">Role</th>
+                        <th className="pb-3 font-semibold">Company</th>
+                        <th className="pb-3 font-semibold">Applied Date</th>
+                        <th className="pb-3 font-semibold">Status</th>
+                        <th className="pb-3 font-semibold text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentApplications.length > 0 ? recentApplications.map((app) => (
+                        <tr key={app.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                          <td className="py-4 font-bold text-slate-900">{app.jobTitle}</td>
+                          <td className="py-4 text-slate-600">{app.companyName}</td>
+                          <td className="py-4 text-slate-500 text-sm">{new Date(app.appliedDate).toLocaleDateString()}</td>
+                          <td className="py-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                app.status === 'Interview' ? 'text-[#4A7C59] bg-[#4A7C59]/10' :
+                                app.status === 'Rejected' ? 'text-red-600 bg-red-50' : 
+                                'text-yellow-600 bg-yellow-50'
+                              }`}>
+                              {app.status}
+                            </span>
+                          </td>
+                          <td className="py-4 text-right">
+                            <button className="text-sm font-medium text-[#4A7C59] hover:underline">View Details</button>
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td colSpan="5" className="py-8 text-center text-slate-500">You haven't applied to any jobs yet.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
+            </>
+          )}
 
-      {/* Floating AI Assistant Panel (from image_49b78c.png reference) */}
+        </div>
+      </main>
+
+      {/* 7. Floating Chatbot */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {chatOpen && (
-          <div className="mb-4 w-[340px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+          <div className="mb-4 w-[340px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-5">
             <div className="p-4 flex justify-between items-center text-white" style={{ background: INK }}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Bot size={18} className="text-emerald-400" />
+                  <Bot size={18} className="text-[#4A7C59]" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">JobMart Assistant</h4>
-                  <p className="text-xs text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+                  <h4 className="font-bold text-sm">AI Career Assistant</h4>
+                  <p className="text-xs text-[#4A7C59] flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#4A7C59]"></span> Online
                   </p>
                 </div>
               </div>
@@ -210,21 +374,15 @@ export default function JobSearchPage() {
             
             <div className="p-4 h-64 overflow-y-auto bg-slate-50 flex flex-col gap-3">
               <div className="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm text-sm text-slate-700 border border-slate-100 w-10/12">
-                Hi, I'm the JobMart assistant. Ask me about roles, your match score, or how to strengthen your profile.
-              </div>
-              <div className="bg-[#4A7C59] p-3 rounded-2xl rounded-tr-sm shadow-sm text-sm text-white self-end w-9/12">
-                Help me improve my resume
-              </div>
-              <div className="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm text-sm text-slate-700 border border-slate-100 w-10/12">
-                I can help tighten your resume headline and summary from the Dashboard → AI tab. Want me to take you there?
+                Hi {username}! Your resume is looking strong. Want me to suggest jobs that match your skills or review interview tips?
               </div>
             </div>
 
             <div className="p-3 bg-white border-t border-slate-100 flex gap-2">
               <input 
                 type="text" 
-                placeholder="Ask about jobs, matches..." 
-                className="flex-1 bg-slate-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-700"
+                placeholder="Ask your AI assistant..." 
+                className="flex-1 bg-slate-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A7C59]/20 text-slate-700"
               />
               <button className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-transform hover:scale-105" style={{ background: INK }}>
                 <Send size={16} />
@@ -236,9 +394,9 @@ export default function JobSearchPage() {
         <button 
           onClick={() => setChatOpen(!chatOpen)}
           className="w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-110"
-          style={{ background: GREEN }}
+          style={{ background: GREEN, boxShadow: '0 8px 20px -8px rgba(74,124,89,0.6)' }}
         >
-          {chatOpen ? <X size={24} /> : <Sparkles size={24} />}
+          {chatOpen ? <X size={24} /> : <Bot size={24} />}
         </button>
       </div>
 

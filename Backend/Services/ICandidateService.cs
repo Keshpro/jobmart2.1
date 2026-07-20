@@ -11,6 +11,11 @@ public interface ICandidateService
 
 public class UpdateCandidateDto
 {
+    public object FirstName { get; internal set; }
+    public object LastName { get; internal set; }
+    public object Phone { get; internal set; }
+    public object Bio { get; internal set; }
+    public string FullName { get; internal set; }
 }
 
 public class CandidateKpiDto
@@ -19,4 +24,9 @@ public class CandidateKpiDto
 
 public class CandidateProfileDto
 {
+    public string FullName { get; internal set; }
+    public object Phone { get; internal set; }
+    public object ResumeUrl { get; internal set; }
+    public object Skills { get; internal set; }
+    public object Bio { get; internal set; }
 }

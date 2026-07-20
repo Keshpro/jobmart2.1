@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  BrainCircuit, Search, Bell, Globe, Menu, X, ChevronDown 
+  Briefcase, Search, Bell, Globe, Menu, X, ChevronDown 
 } from 'lucide-react';
+
+const GREEN = '#4A7C59';
+const INK = '#0F172A';
 
 const navLinks = [
   { name: 'Home', path: '/' },
@@ -55,11 +58,14 @@ export default function Navbar() {
         
         {/* Left Section: Logo */}
         <Link to="/" className="flex items-center gap-2.5 group shrink-0" onClick={() => setMobileOpen(false)}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20 transition-transform group-hover:scale-105">
-            <BrainCircuit size={22} strokeWidth={2} />
+          <div 
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-105"
+            style={{ background: `linear-gradient(135deg, ${GREEN}, #2F5B3F)`, boxShadow: '0 4px 14px 0 rgba(74, 124, 89, 0.3)' }}
+          >
+            <Briefcase size={22} strokeWidth={2} />
           </div>
-          <span className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
-            Talent<span className="text-blue-600">AI</span>
+          <span className="text-2xl font-bold tracking-tight font-serif" style={{ color: INK }}>
+            Job<span style={{ color: GREEN }}>Mart</span>
           </span>
         </Link>
 
@@ -76,16 +82,16 @@ export default function Navbar() {
                 to={link.path}
                 className={`px-4 py-2 rounded-full text-[15px] font-medium transition-all duration-300 flex items-center gap-1
                   ${isActive(link.path) 
-                    ? 'bg-blue-50 text-blue-600' 
-                    : 'text-slate-600 hover:text-blue-600'
+                    ? 'bg-[#4A7C59]/10 text-[#4A7C59]' 
+                    : 'text-slate-600 hover:text-[#4A7C59]'
                   }`}
               >
                 {link.name}
-                {link.dropdown && <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === link.name ? 'rotate-180 text-blue-600' : 'text-slate-400'}`} />}
+                {link.dropdown && <ChevronDown size={14} className={`transition-transform duration-300 ${activeDropdown === link.name ? 'rotate-180 text-[#4A7C59]' : 'text-slate-400'}`} />}
                 
                 {/* Hover Underline Animation (Only for non-active links) */}
                 {!isActive(link.path) && (
-                  <span className="absolute bottom-5 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-blue-600 rounded-full transition-all duration-300 group-hover:w-6 opacity-0 group-hover:opacity-100"></span>
+                  <span className="absolute bottom-5 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-[#4A7C59] rounded-full transition-all duration-300 group-hover:w-6 opacity-0 group-hover:opacity-100"></span>
                 )}
               </Link>
 
@@ -99,7 +105,7 @@ export default function Navbar() {
                     <Link 
                       key={item} 
                       to={`${link.path}/${item.toLowerCase().replace(' ', '-')}`}
-                      className="block px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 transition-colors"
+                      className="block px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-[#4A7C59] hover:bg-[#4A7C59]/5 transition-colors"
                     >
                       {item}
                     </Link>
@@ -119,26 +125,26 @@ export default function Navbar() {
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="w-full bg-slate-100 text-sm text-slate-700 px-4 py-2 rounded-full border border-slate-200 focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="w-full bg-slate-100 text-sm text-slate-700 px-4 py-2 rounded-full border border-slate-200 focus:outline-none focus:border-[#4A7C59]/50 focus:ring-2 focus:ring-[#4A7C59]/20"
                 autoFocus={searchOpen}
               />
             </div>
             <button 
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              className="p-2 text-slate-500 hover:text-[#4A7C59] hover:bg-[#4A7C59]/10 rounded-full transition-colors"
             >
               {searchOpen ? <X size={20} /> : <Search size={20} />}
             </button>
           </div>
 
           {/* Notifications */}
-          <button className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors relative">
+          <button className="p-2 text-slate-500 hover:text-[#4A7C59] hover:bg-[#4A7C59]/10 rounded-full transition-colors relative">
             <Bell size={20} />
             <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
 
           {/* Language Selector */}
-          <button className="flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-sm font-medium transition-colors mr-2">
+          <button className="flex items-center gap-1.5 text-slate-500 hover:text-[#4A7C59] text-sm font-medium transition-colors mr-2">
             <Globe size={18} />
             EN <ChevronDown size={14} />
           </button>
@@ -148,7 +154,7 @@ export default function Navbar() {
           {/* Auth Buttons */}
           {token ? (
             <Link to="/dashboard">
-              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold hover:border-blue-300 transition-colors cursor-pointer">
+              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[#0F172A] font-bold hover:border-[#4A7C59] transition-colors cursor-pointer">
                 US
               </div>
             </Link>
@@ -156,13 +162,15 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <Link 
                 to="/login"
-                className="px-5 py-2.5 rounded-xl font-semibold text-sm text-blue-600 bg-white border-2 border-blue-600 hover:bg-blue-50 transition-colors"
+                className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-white border-2 hover:bg-[#4A7C59]/5 transition-colors"
+                style={{ color: GREEN, borderColor: GREEN }}
               >
                 Login
               </Link>
               <Link 
                 to="/register"
-                className="px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all"
+                className="px-5 py-2.5 rounded-xl font-semibold text-sm text-white shadow-lg hover:-translate-y-0.5 transition-all"
+                style={{ background: GREEN, boxShadow: '0 8px 20px -8px rgba(74,124,89,0.6)' }}
               >
                 Register
               </Link>
@@ -200,7 +208,7 @@ export default function Navbar() {
               <div key={link.name}>
                 <Link 
                   to={link.path}
-                  className={`block px-4 py-3 rounded-xl font-medium ${isActive(link.path) ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                  className={`block px-4 py-3 rounded-xl font-medium ${isActive(link.path) ? 'bg-[#4A7C59]/10 text-[#4A7C59]' : 'text-slate-600 hover:bg-slate-50'}`}
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.name}
@@ -211,7 +219,7 @@ export default function Navbar() {
                       <Link 
                         key={item}
                         to={`${link.path}/${item.toLowerCase().replace(' ', '-')}`}
-                        className="py-2 text-sm text-slate-500 hover:text-blue-600"
+                        className="py-2 text-sm text-slate-500 hover:text-[#4A7C59]"
                         onClick={() => setMobileOpen(false)}
                       >
                         {item}
@@ -228,14 +236,16 @@ export default function Navbar() {
               <>
                 <Link 
                   to="/login"
-                  className="w-full py-3 text-center rounded-xl font-semibold text-blue-600 bg-white border-2 border-blue-600"
+                  className="w-full py-3 text-center rounded-xl font-semibold bg-white border-2"
+                  style={{ color: GREEN, borderColor: GREEN }}
                   onClick={() => setMobileOpen(false)}
                 >
                   Login
                 </Link>
                 <Link 
                   to="/register"
-                  className="w-full py-3 text-center rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500"
+                  className="w-full py-3 text-center rounded-xl font-semibold text-white"
+                  style={{ background: GREEN }}
                   onClick={() => setMobileOpen(false)}
                 >
                   Register

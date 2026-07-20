@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Backend.Repositories;
 
 public interface IAIService
 {
@@ -47,12 +48,12 @@ public class AIService : IAIService
 
     public async Task<MatchScoreResponseDto> CalculateMatchScoreAsync(string userId, string jobId)
     {
-        var candidateProfile = await _candidateRepository.GetProfileByUserIdAsync(userId);
+        await _candidateRepository.GetProfileByUserIdAsync(userId);
         var jobDetails = await _jobRepository.GetJobByIdAsync(jobId);
 
-        if (candidateProfile == null || jobDetails == null)
+        if (jobDetails == null)
         {
-            return new MatchScoreResponseDto { MatchPercentage = 0, Summary = "Profile or Job not found." };
+            return new MatchScoreResponseDto { MatchPercentage = 0, Summary = "Job not found." };
         }
 
         // Logic to compare candidate skills/experience against job requirements via embeddings or LLM evaluation
@@ -68,8 +69,7 @@ public class AIService : IAIService
 
     public async Task<IEnumerable<JobResponseDto>> GetRecommendedJobsAsync(string userId)
     {
-        var candidateProfile = await _candidateRepository.GetProfileByUserIdAsync(userId);
-        if (candidateProfile == null) return new List<JobResponseDto>();
+        await _candidateRepository.GetProfileByUserIdAsync(userId);
 
         // Fetch active jobs and match against candidate preferences or embedded skill vectors
         var allJobs = await _jobRepository.GetFilteredJobsAsync(new JobFilterDto());

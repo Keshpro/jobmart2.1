@@ -1,10 +1,25 @@
+using Backend.Models; // Oyage Models thiyena namespace eka
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-public interface ICandidateRepository
+namespace Backend.Repositories
 {
-    Task<string> GetCandidateIdByUserIdAsync(string userId);
-    Task<CandidateProfileDto> GetProfileByUserIdAsync(string userId);
-    Task<bool> UpdateProfileAsync(string userId, UpdateCandidateDto updateDto);
-    Task<CandidateKpiDto> GetKpisByCandidateIdAsync(string candidateId);
-    Task<bool> SaveResumeRecordAsync(string candidateId, string fileUrl, string fileName);
+    public interface ICandidateRepository
+    {
+        // Profile Management
+        Task<Candidate> GetCandidateByUserIdAsync(string userId);
+        Task<bool> UpdateCandidateProfileAsync(Candidate candidate);
+        Task<bool> UpdateResumeDetailsAsync(int candidateId, string resumeUrl, string extractedSkills);
+
+        // Dashboard KPIs & Data
+        Task<CandidateKpiDto> GetDashboardKpisAsync(int candidateId);
+        Task<IEnumerable<RecentApplicationDto>> GetRecentApplicationsAsync(int candidateId);
+        Task<bool> UpdateResumeDetailsAsync(object id, string fileUrl, string v);
+        Task GetProfileByUserIdAsync(string userId);
+        Task<string?> GetCandidateIdByUserIdAsync(string userId);
+    }
+
+    public class RecentApplicationDto
+    {
+    }
 }

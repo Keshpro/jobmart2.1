@@ -11,5 +11,9 @@ namespace Backend.Models
         // User එකත් එක්ක සම්බන්ධ කරන්න (Foreign Key)
         public int UserId { get; set; }
         public User User { get; set; } = null!;
+        public object Bio { get; internal set; }
+        public object ResumeUrl { get; internal set; }
+        public object Skills { get; internal set; }
+        public int Id { get; internal set; }
     }
 }

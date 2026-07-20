@@ -1,67 +1,123 @@
-using System.Threading.Tasks;
 using System.Data;
 using Dapper;
+using Microsoft.Data.SqlClient;
+using Backend.Models;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-public class CandidateRepository : ICandidateRepository
+namespace Backend.Repositories
 {
-    private readonly IDbConnection _dbConnection;
-
-    public object Dapper { get; private set; }
-
-    public CandidateRepository(IDbConnection dbConnection)
+    public class CandidateRepository : ICandidateRepository
     {
-        _dbConnection = dbConnection;
-    }
+        private readonly string _connectionString;
 
-    public async Task<string> GetCandidateIdByUserIdAsync(string userId)
-    {
-        var query = "SELECT Id FROM Candidates WHERE UserId = @UserId";
-        return await _dbConnection.ExecuteScalarAsync<string>(query, new { UserId = userId });
-    }
+        // Constructor eken appsettings.json wala thiyena Connection String eka gannawa
+        public CandidateRepository(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
+                                ?? throw new System.ArgumentNullException("DefaultConnection is missing!");
+        }
 
-    public async Task<CandidateProfileDto> GetProfileByUserIdAsync(string userId)
-    {
-        var query = @"SELECT c.Id, c.FirstName, c.LastName, c.Phone, c.Bio, c.Skills, u.Email 
-                      FROM Candidates c 
-                      INNER JOIN Users u ON c.UserId = u.Id 
-                      WHERE c.UserId = @UserId";
-        return await _dbConnection.QueryFirstOrDefaultAsync<CandidateProfileDto>(query, new { UserId = userId });
-    }
+        // Database connection eka create karana method eka
+        private IDbConnection CreateConnection()
+        {
+            return new SqlConnection(_connectionString);
+        }
 
-    public async Task<bool> UpdateProfileAsync(string userId, UpdateCandidateDto updateDto)
-    {
-        var query = @"UPDATE Candidates 
-                      SET FirstName = @FirstName, LastName = @LastName, Phone = @Phone, Bio = @Bio, Skills = @Skills 
-                      WHERE UserId = @UserId";
-        var rowsAffected = await _dbConnection.ExecuteAsync(query, new {
-            updateDto.FirstName,
-            updateDto.LastName,
-            updateDto.Phone,
-            updateDto.Bio,
-            updateDto.Skills,
-            UserId = userId
-        });
-        return rowsAffected > 0;
-    }
+        // 1. UserID eken Candidate Profile eka ganna
+        public async Task<Candidate> GetCandidateByUserIdAsync(string userId)
+        {
+            var query = "SELECT * FROM Candidates WHERE UserId = @UserId";
 
-    public async Task<CandidateKpiDto> GetKpisByCandidateIdAsync(string candidateId)
-    {
-        var query = @"SELECT 
-                        SUM(CASE WHEN Status = 'Applied' THEN 1 ELSE 0 END) AS AppliedCount,
-                        SUM(CASE WHEN Status = 'Rejected' THEN 1 ELSE 0 END) AS RejectedCount,
-                        SUM(CASE WHEN Status = 'Pending' THEN 1 ELSE 0 END) AS PendingCount,
-                        SUM(CASE WHEN Status = 'Completed' THEN 1 ELSE 0 END) AS CompletedCount
-                      FROM Applications 
-                      WHERE CandidateId = @CandidateId";
-        
-        var result = await Dapper.SqlMapper.QueryFirstOrDefaultAsync<CandidateKpiDto>(_dbConnection, query, new { CandidateId = candidateId });
-        return result ?? new CandidateKpiDto();
-    }
+            using var connection = CreateConnection();
+#pragma warning disable CS8603 // Possible null reference return.
+            return await connection.QuerySingleOrDefaultAsync<Candidate>(query, new { UserId = userId });
+#pragma warning restore CS8603 // Possible null reference return.
+        }
 
-    public async Task<bool> SaveResumeRecordAsync(string candidateId, string fileUrl, string fileName)
-    {
-        var query = "INSERT INTO Resumes (Id, CandidateId, FileUrl, FileName, UploadedAt) VALUES (NEWID(), @CandidateId, @FileUrl, @FileName, GETUTCDATE())";
-        var rowsAffected = await _dbConnection.ExecuteAsync(query, new { CandidateId = candidateId, FileUrl = fileUrl, FileName = fileName });
-        return rowsAffected > 0;
+        // 2. Candidate Profile eka update karanna
+        public async Task<bool> UpdateCandidateProfileAsync(Candidate candidate)
+        {
+            var query = @"
+                UPDATE Candidates 
+                SET FullName = @FullName, 
+                    Phone = @Phone, 
+                    Bio = @Bio, 
+                    UpdatedAt = GETDATE()
+                WHERE Id = @Id";
+
+            using var connection = CreateConnection();
+            var rowsAffected = await connection.ExecuteAsync(query, candidate);
+            return rowsAffected > 0;
+        }
+
+        // 3. Supabase eken ena CV URL eka saha AI extract karana skills save karanna
+        public async Task<bool> UpdateResumeDetailsAsync(int candidateId, string resumeUrl, string extractedSkills)
+        {
+            var query = @"
+                UPDATE Candidates 
+                SET ResumeUrl = @ResumeUrl, 
+                    Skills = @Skills,
+                    UpdatedAt = GETDATE()
+                WHERE Id = @Id";
+
+            using var connection = CreateConnection();
+            var rowsAffected = await connection.ExecuteAsync(query, new { Id = candidateId, ResumeUrl = resumeUrl, Skills = extractedSkills });
+            return rowsAffected > 0;
+        }
+
+        // 4. Dashboard KPIs (Applied, Pending, Interviews, Rejections) count eka ganna
+        public async Task<CandidateKpiDto> GetDashboardKpisAsync(int candidateId)
+        {
+            // Application table eken status eka anuwa group karala counts gannawa
+            var query = @"
+                SELECT 
+                    COUNT(Id) AS Applied,
+                    SUM(CASE WHEN Status = 'Pending' THEN 1 ELSE 0 END) AS Pending,
+                    SUM(CASE WHEN Status = 'Interview' THEN 1 ELSE 0 END) AS Interviews,
+                    SUM(CASE WHEN Status = 'Rejected' THEN 1 ELSE 0 END) AS Rejections
+                FROM JobApplications
+                WHERE CandidateId = @CandidateId";
+
+            using var connection = CreateConnection();
+            return await connection.QuerySingleOrDefaultAsync<CandidateKpiDto>(query, new { CandidateId = candidateId })
+                   ?? new CandidateKpiDto(); // Null nam empty object ekak return karanawa
+        }
+
+        // 5. Dashboard ekata Recent Applications tika ganna
+        public async Task<IEnumerable<RecentApplicationDto>> GetRecentApplicationsAsync(int candidateId)
+        {
+            var query = @"
+                SELECT TOP 5 
+                    a.Id, 
+                    j.Title AS JobTitle, 
+                    c.Name AS CompanyName, 
+                    a.AppliedDate, 
+                    a.Status
+                FROM JobApplications a
+                INNER JOIN Jobs j ON a.JobId = j.Id
+                INNER JOIN Companies c ON j.CompanyId = c.Id
+                WHERE a.CandidateId = @CandidateId
+                ORDER BY a.AppliedDate DESC";
+
+            using var connection = CreateConnection();
+            return await connection.QueryAsync<RecentApplicationDto>(query, new { CandidateId = candidateId });
+        }
+
+        public Task<bool> UpdateResumeDetailsAsync(object id, string fileUrl, string v)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task GetProfileByUserIdAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string?> GetCandidateIdByUserIdAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

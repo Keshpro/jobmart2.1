@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Navbar from '../components/Navbar'; // Navbar eka components folder eken import karanawa
 import { 
   Search, MapPin, Briefcase, Filter, ChevronDown, 
   Bookmark, Star, Sparkles, X, Send, Bot, Building2, 
@@ -27,22 +28,26 @@ const jobs = [
 const GREEN = '#4A7C59';
 const INK = '#0F172A';
 
-export default function JobSearchPage() {
+export default function Home() {
   const [chatOpen, setChatOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       
-      {/* Hero Section */}
+      {/* 1. Navigation Bar */}
+      <Navbar />
+
+      {/* 2. Hero Section */}
       <div className="pt-16 pb-12 px-6 max-w-7xl mx-auto">
         <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-100">
-          <Sparkles size={14} /> Powered by JobMart AI
+          <Sparkles size={14} /> Powered by Google Gemini
         </div>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-[#0F172A] mb-4 font-serif">
-          Find Your <span style={{ color: GREEN }}>Dream Career</span>
+          Hiring that reads <br className="hidden md:block" />
+          the room, not just <span style={{ color: GREEN }}>the resume.</span>
         </h1>
         <p className="text-lg text-slate-500 mb-10 max-w-2xl">
-          Explore thousands of verified opportunities across every industry. Our AI matches your skills to the perfect role.
+          JobMart scores every role against your actual skills, so the first thing you see is the job worth applying to.
         </p>
 
         {/* Search Bar */}
@@ -67,7 +72,7 @@ export default function JobSearchPage() {
         </p>
       </div>
 
-      {/* Categories Horizontal Scroll */}
+      {/* 3. Categories Horizontal Scroll */}
       <div className="border-y border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-6 py-6 flex gap-4 overflow-x-auto no-scrollbar">
           {categories.map((cat, idx) => (
@@ -84,12 +89,12 @@ export default function JobSearchPage() {
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* 4. Main Content Area (Filters & Job List) */}
       <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-8">
         
         {/* Left Sidebar Filters */}
         <div className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 sticky top-24">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 sticky top-28">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-lg">Filters</h3>
               <Filter size={18} className="text-slate-400" />
@@ -169,7 +174,7 @@ export default function JobSearchPage() {
 
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-emerald-500 text-emerald-600 font-bold text-xs bg-emerald-50">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-[#4A7C59] text-[#4A7C59] font-bold text-xs bg-emerald-50">
                       {job.match}%
                     </div>
                     <span className="text-xs text-slate-500 font-medium">Match Score</span>
@@ -187,7 +192,7 @@ export default function JobSearchPage() {
         </div>
       </div>
 
-      {/* Floating AI Assistant Panel (from image_49b78c.png reference) */}
+      {/* 5. Floating AI Assistant Panel */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {chatOpen && (
           <div className="mb-4 w-[340px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
@@ -224,7 +229,7 @@ export default function JobSearchPage() {
               <input 
                 type="text" 
                 placeholder="Ask about jobs, matches..." 
-                className="flex-1 bg-slate-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-700"
+                className="flex-1 bg-slate-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A7C59]/20 text-slate-700"
               />
               <button className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-transform hover:scale-105" style={{ background: INK }}>
                 <Send size={16} />

@@ -19,7 +19,9 @@ public class SupabaseStorageService : ISupabaseStorageService
         _supabaseClient = supabaseClient;
     }
 
-    public async Task<string> UploadFileAsync(IFormFile file, string bucketName)
+#pragma warning disable CS8613 // Nullability of reference types in return type doesn't match implicitly implemented member.
+    public async Task<string?> UploadFileAsync(IFormFile file, string bucketName)
+#pragma warning restore CS8613 // Nullability of reference types in return type doesn't match implicitly implemented member.
     {
         try
         {
